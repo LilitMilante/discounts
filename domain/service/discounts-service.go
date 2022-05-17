@@ -20,27 +20,26 @@ func NewDiscountService(s *store.Store) *DiscountService {
 	return &ds
 }
 
+func (ds DiscountService) ClientDiscounts() ([]entity.ClientDiscount, error) {
+	return ds.store.SelectClientDiscounts()
+}
+
+func (ds DiscountService) ClientDiscountByNumber(numb string) (entity.ClientDiscount, error) {
+	return ds.store.SelectClientDiscountByNumber(numb)
+}
+
 func (ds DiscountService) CreatedClientDiscount(d entity.ClientDiscount) (entity.ClientDiscount, error) {
 	_, err := ds.store.SelectClientDiscountByNumber(d.ClientNumber)
-
-	isNotFound := errors.Is(err, domain.ErrNotFound)
-
-	if !isNotFound && err != nil {
+	switch {
+	case err == nil:
+		return d, domain.ErrDuplicateKey
+	case !errors.Is(err, domain.ErrNotFound):
 		return d, err
 	}
 
-	if isNotFound {
-		d.CreatedAt = time.Now().UTC()
-		d.UpdatedAt = time.Now().UTC()
-		d.Sale = 2
+	d.CreatedAt = time.Now().UTC()
+	d.UpdatedAt = d.CreatedAt
+	d.Sale = 2
 
-		d, err = ds.store.InsertClientDiscount(d)
-		if err != nil {
-			return d, err
-		}
-
-		return d, nil
-	}
-
-	return d, domain.ErrDuplicateKey
+	return ds.store.InsertClientDiscount(d)
 }

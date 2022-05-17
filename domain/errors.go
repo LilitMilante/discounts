@@ -2,5 +2,5 @@ package domain
 
 import "errors"
 
-var ErrNotFound = errors.New("id not found")
+var ErrNotFound = errors.New("client number not found")
 var ErrDuplicateKey = errors.New("this client already exists")
