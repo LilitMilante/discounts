@@ -28,6 +28,7 @@ func (s Server) Start(port string) error {
 	s.r.HandleFunc("/discounts", s.AddClientDiscount).Methods(http.MethodPost)
 	s.r.HandleFunc("/discounts", s.ClientDiscounts).Methods(http.MethodGet)
 	s.r.HandleFunc("/discounts/{number}", s.ClientDiscount).Methods(http.MethodGet)
+	s.r.HandleFunc("/discounts/{number}", s.ChangeClientDiscount).Methods(http.MethodPatch)
 
 	httpServer := http.Server{
 		Addr:    ":" + port,
@@ -94,4 +95,31 @@ func (s Server) AddClientDiscount(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func (s Server) ChangeClientDiscount(w http.ResponseWriter, r *http.Request) {
+	var ud entity.UpdateClientDiscount
+
+	err := json.NewDecoder(r.Body).Decode(&ud)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+
+		return
+	}
+
+	n := mux.Vars(r)["number"]
+
+	d, err := s.ds.EditClientDiscountByNumber(ud, n)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(d)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
 }

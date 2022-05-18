@@ -10,3 +10,10 @@ type ClientDiscount struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
+
+type UpdateClientDiscount struct {
+	ClientName   *string    `json:"client_name"`
+	ClientNumber *string    `json:"client_number"`
+	Sale         *int8      `json:"sale"`
+	UpdatedAt    *time.Time `json:"updated_at"`
+}

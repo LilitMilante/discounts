@@ -5,6 +5,7 @@ import (
 	"discounts/domain"
 	"discounts/domain/entity"
 	"errors"
+	"fmt"
 )
 
 type Store struct {
@@ -53,13 +54,9 @@ func (s Store) SelectClientDiscounts() ([]entity.ClientDiscount, error) {
 func (s Store) SelectClientDiscountByNumber(numb string) (entity.ClientDiscount, error) {
 	var d entity.ClientDiscount
 
-	q := `
-SELECT client_id, client_name, client_number, sale, created_at, updated_at 
-FROM discounts 
-WHERE client_number = $1
-`
+	q := `SELECT client_id, client_name, client_number, sale, created_at, updated_at FROM discounts WHERE client_number = $1`
 	err := s.db.QueryRow(q, numb).
-		Scan(&d.ClientID, &d.ClientNumber, &d.ClientNumber, &d.Sale, &d.CreatedAt, &d.UpdatedAt)
+		Scan(&d.ClientID, &d.ClientName, &d.ClientNumber, &d.Sale, &d.CreatedAt, &d.UpdatedAt)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -70,4 +67,42 @@ WHERE client_number = $1
 	}
 
 	return d, nil
+}
+
+func (s Store) UpdateClientDiscountByNumber(d entity.UpdateClientDiscount, numb string) (entity.ClientDiscount, error) {
+	var dc entity.ClientDiscount
+
+	var columns string
+	var args []interface{}
+
+	if d.ClientName != nil {
+		args = append(args, d.ClientName)
+		columns += fmt.Sprintf("client_name = $%d, ", len(args))
+	}
+	if d.ClientNumber != nil {
+		args = append(args, d.ClientNumber)
+		columns += fmt.Sprintf("client_number = $%d, ", len(args))
+	}
+	if d.Sale != nil {
+		args = append(args, d.Sale)
+		columns += fmt.Sprintf("sale = $%d, ", len(args))
+	}
+	if d.UpdatedAt != nil {
+		args = append(args, d.UpdatedAt)
+		columns += fmt.Sprintf("updated_at = $%d, ", len(args))
+	}
+
+	args = append(args, numb)
+
+	set := columns[:len(columns)-2] // убираем в конце запятую
+
+	q := fmt.Sprintf("UPDATE discounts SET %s WHERE client_number = $%d RETURNING client_id, client_name, client_number, sale, created_at, updated_at", set, len(args))
+
+	err := s.db.QueryRow(q, args...).
+		Scan(&dc.ClientID, &dc.ClientName, &dc.ClientNumber, &dc.Sale, &dc.CreatedAt, &dc.UpdatedAt)
+	if err != nil {
+		return entity.ClientDiscount{}, err
+	}
+
+	return dc, nil
 }

@@ -43,3 +43,14 @@ func (ds DiscountService) CreatedClientDiscount(d entity.ClientDiscount) (entity
 
 	return ds.store.InsertClientDiscount(d)
 }
+
+func (ds DiscountService) EditClientDiscountByNumber(d entity.UpdateClientDiscount, number string) (entity.ClientDiscount, error) {
+	_, err := ds.store.SelectClientDiscountByNumber(number)
+	if err != nil {
+		return entity.ClientDiscount{}, err
+	}
+	nowT := time.Now().UTC()
+	d.UpdatedAt = &nowT
+
+	return ds.store.UpdateClientDiscountByNumber(d, number)
+}
