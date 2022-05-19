@@ -35,10 +35,6 @@ func (cd ClientDiscount) Validate() error {
 	if err != nil {
 		return err
 	}
-	err = validClientSale(cd.Sale)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -67,7 +63,7 @@ func (ucd UpdateClientDiscount) Validate() error {
 func validClientName(name string) error {
 	count := utf8.RuneCountInString(name)
 
-	if count < 3 || count > 51 {
+	if count < 3 || count > 50 {
 		return fmt.Errorf("%w: name must be between 3 and 50 characters", domain.ErrValidate)
 	}
 
@@ -83,7 +79,7 @@ func validClientNumber(num string) error {
 }
 
 func validClientSale(sale int8) error {
-	if sale < 0 || sale > 51 {
+	if sale < 0 || sale > 50 {
 		errTxt := "discount must be at least 0% and not more than 50%"
 		return fmt.Errorf("%w: %s", domain.ErrValidate, errTxt)
 	}
