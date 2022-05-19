@@ -106,3 +106,9 @@ func (s Store) UpdateClientDiscountByNumber(d entity.UpdateClientDiscount, numb 
 
 	return dc, nil
 }
+
+func (s Store) DeleteClientDiscount(numb string) error {
+	_, err := s.db.Exec("DELETE FROM discounts WHERE client_number = $1", numb)
+
+	return err
+}

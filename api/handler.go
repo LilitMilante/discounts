@@ -29,6 +29,7 @@ func (s Server) Start(port string) error {
 	s.r.HandleFunc("/discounts", s.ClientDiscounts).Methods(http.MethodGet)
 	s.r.HandleFunc("/discounts/{number}", s.ClientDiscount).Methods(http.MethodGet)
 	s.r.HandleFunc("/discounts/{number}", s.ChangeClientDiscount).Methods(http.MethodPatch)
+	s.r.HandleFunc("/discounts/{number}", s.DeleteClientDiscount).Methods(http.MethodDelete)
 
 	httpServer := http.Server{
 		Addr:    ":" + port,
@@ -83,6 +84,14 @@ func (s Server) AddClientDiscount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = d.Validate()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+
+		return
+	}
+
 	d, err = s.ds.CreatedClientDiscount(d)
 	if err != nil {
 		log.Println(err)
@@ -107,6 +116,14 @@ func (s Server) ChangeClientDiscount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = ud.Validate()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+
+		return
+	}
+
 	n := mux.Vars(r)["number"]
 
 	d, err := s.ds.EditClientDiscountByNumber(ud, n)
@@ -122,4 +139,14 @@ func (s Server) ChangeClientDiscount(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
+}
+
+func (s Server) DeleteClientDiscount(w http.ResponseWriter, r *http.Request) {
+	n := mux.Vars(r)["number"]
+
+	err := s.ds.DeleteClientDiscount(n)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }

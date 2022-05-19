@@ -54,3 +54,12 @@ func (ds DiscountService) EditClientDiscountByNumber(d entity.UpdateClientDiscou
 
 	return ds.store.UpdateClientDiscountByNumber(d, number)
 }
+
+func (ds DiscountService) DeleteClientDiscount(numb string) error {
+	_, err := ds.store.SelectClientDiscountByNumber(numb)
+	if err != nil {
+		return err
+	}
+
+	return ds.store.DeleteClientDiscount(numb)
+}
