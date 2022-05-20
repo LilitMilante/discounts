@@ -2,6 +2,7 @@ package entity
 
 import (
 	"discounts/domain"
+	"errors"
 	"fmt"
 	"regexp"
 	"time"
@@ -27,35 +28,44 @@ type UpdateClientDiscount struct {
 }
 
 func (cd ClientDiscount) Validate() error {
+	errTxt := ""
 	err := validClientName(cd.ClientName)
 	if err != nil {
-		return err
+		errTxt += err.Error() + "; "
 	}
 	err = validClientNumber(cd.ClientNumber)
 	if err != nil {
-		return err
+		errTxt += err.Error()
+	}
+	if len(errTxt) != 0 {
+		return fmt.Errorf("%w: %s", domain.ErrValidate, errTxt)
 	}
 	return nil
 }
 
 func (ucd UpdateClientDiscount) Validate() error {
+	errTxt := ""
+
 	if ucd.ClientName != nil {
 		err := validClientName(*ucd.ClientName)
 		if err != nil {
-			return err
+			errTxt += err.Error() + "; "
 		}
 	}
 	if ucd.ClientNumber != nil {
 		err := validClientNumber(*ucd.ClientNumber)
 		if err != nil {
-			return err
+			errTxt += err.Error() + "; "
 		}
 	}
 	if ucd.Sale != nil {
 		err := validClientSale(*ucd.Sale)
 		if err != nil {
-			return err
+			errTxt += err.Error() + "; "
 		}
+	}
+	if len(errTxt) != 0 {
+		return fmt.Errorf("%w: %s", domain.ErrValidate, errTxt)
 	}
 	return nil
 }
@@ -64,7 +74,7 @@ func validClientName(name string) error {
 	count := utf8.RuneCountInString(name)
 
 	if count < 3 || count > 50 {
-		return fmt.Errorf("%w: name must be between 3 and 50 characters", domain.ErrValidate)
+		return errors.New("name must be between 3 and 50 characters")
 	}
 
 	return nil
@@ -72,7 +82,7 @@ func validClientName(name string) error {
 
 func validClientNumber(num string) error {
 	if !regexpNumber.MatchString(num) {
-		return fmt.Errorf("%w: wrong number entered", domain.ErrValidate)
+		return errors.New("wrong number entered")
 	}
 
 	return nil
@@ -80,8 +90,7 @@ func validClientNumber(num string) error {
 
 func validClientSale(sale int8) error {
 	if sale < 0 || sale > 50 {
-		errTxt := "discount must be at least 0% and not more than 50%"
-		return fmt.Errorf("%w: %s", domain.ErrValidate, errTxt)
+		return errors.New("discount must be at least 0% and not more than 50%")
 	}
 
 	return nil
