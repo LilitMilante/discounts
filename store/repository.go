@@ -29,7 +29,7 @@ VALUES ($1, $2, $3, $4, $5) RETURNING client_id
 	return d, err
 }
 
-func (s Store) SelectClientDiscounts() ([]entity.ClientDiscount, error) {
+func (s Store) SelectClientDiscounts(f entity.ClientDiscountFilters) ([]entity.ClientDiscount, error) {
 	r, err := s.db.Query(`SELECT client_id, client_name, client_number, sale, created_at, updated_at FROM discounts`)
 	if err != nil {
 		return nil, err

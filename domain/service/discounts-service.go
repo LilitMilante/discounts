@@ -20,8 +20,8 @@ func NewDiscountService(s *store.Store) *DiscountService {
 	return &ds
 }
 
-func (ds DiscountService) ClientDiscounts() ([]entity.ClientDiscount, error) {
-	return ds.store.SelectClientDiscounts()
+func (ds DiscountService) ClientDiscounts(f entity.ClientDiscountFilters) ([]entity.ClientDiscount, error) {
+	return ds.store.SelectClientDiscounts(f)
 }
 
 func (ds DiscountService) ClientDiscountByNumber(numb string) (entity.ClientDiscount, error) {

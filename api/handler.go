@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type Server struct {
@@ -38,8 +39,29 @@ func (s Server) Start(port string) error {
 	return httpServer.ListenAndServe()
 }
 
-func (s Server) ClientDiscounts(w http.ResponseWriter, _ *http.Request) {
-	d, err := s.ds.ClientDiscounts()
+func (s Server) ClientDiscounts(w http.ResponseWriter, r *http.Request) {
+	f := entity.ClientDiscountFilters{}
+
+	q := r.URL.Query()
+	n := q.Get("name")
+	if n != "" {
+		f.Name = &n
+	}
+
+	sl := q.Get("sale")
+	if sl != "" {
+		slInt, err := strconv.Atoi(sl)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+		p := int8(slInt)
+		f.Sale = &p
+	}
+
+	d, err := s.ds.ClientDiscounts(f)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)

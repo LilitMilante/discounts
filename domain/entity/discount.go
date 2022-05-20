@@ -27,6 +27,11 @@ type UpdateClientDiscount struct {
 	UpdatedAt    *time.Time `json:"updated_at"`
 }
 
+type ClientDiscountFilters struct {
+	Name *string
+	Sale *int8
+}
+
 func (cd ClientDiscount) Validate() error {
 	errTxt := ""
 	err := validClientName(cd.ClientName)
