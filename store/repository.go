@@ -30,7 +30,26 @@ VALUES ($1, $2, $3, $4, $5) RETURNING client_id
 }
 
 func (s Store) SelectClientDiscounts(f entity.ClientDiscountFilters) ([]entity.ClientDiscount, error) {
-	r, err := s.db.Query(`SELECT client_id, client_name, client_number, sale, created_at, updated_at FROM discounts`)
+	var columns string
+	var args []interface{}
+
+	if f.Name != nil {
+		args = append(args, f.Name)
+		columns += fmt.Sprintf("client_name = $%d AND ", len(args))
+	}
+	if f.Sale != nil {
+		args = append(args, f.Sale)
+		columns += fmt.Sprintf("sale = $%d AND ", len(args))
+	}
+
+	q := "SELECT client_id, client_name, client_number, sale, created_at, updated_at FROM discounts"
+
+	if len(args) != 0 {
+		where := columns[:len(columns)-5] // убираем в конце пробел и запятую
+		q += fmt.Sprintf(" WHERE %s", where)
+	}
+
+	r, err := s.db.Query(q, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +113,7 @@ func (s Store) UpdateClientDiscountByNumber(d entity.UpdateClientDiscount, numb 
 
 	args = append(args, numb)
 
-	set := columns[:len(columns)-2] // убираем в конце запятую
+	set := columns[:len(columns)-2] // убираем в конце пробел и запятую
 
 	q := fmt.Sprintf("UPDATE discounts SET %s WHERE client_number = $%d RETURNING client_id, client_name, client_number, sale, created_at, updated_at", set, len(args))
 

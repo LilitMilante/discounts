@@ -37,7 +37,7 @@ func (ds DiscountService) CreatedClientDiscount(d entity.ClientDiscount) (entity
 		return d, err
 	}
 
-	d.CreatedAt = time.Now().UTC()
+	d.CreatedAt = time.Now()
 	d.UpdatedAt = d.CreatedAt
 	d.Sale = 2
 
@@ -49,7 +49,7 @@ func (ds DiscountService) EditClientDiscountByNumber(d entity.UpdateClientDiscou
 	if err != nil {
 		return entity.ClientDiscount{}, err
 	}
-	nowT := time.Now().UTC()
+	nowT := time.Now()
 	d.UpdatedAt = &nowT
 
 	return ds.store.UpdateClientDiscountByNumber(d, number)
