@@ -41,6 +41,10 @@ func (s Store) SelectClientDiscounts(f entity.ClientDiscountFilters) ([]entity.C
 		args = append(args, f.Sale)
 		columns += fmt.Sprintf("sale = $%d AND ", len(args))
 	}
+	if f.Start != nil && f.End != nil {
+		args = append(args, f.Start, f.End)
+		columns += fmt.Sprintf("created_at BETWEEN $%d AND $%d AND ", len(args)-1, len(args))
+	}
 
 	q := "SELECT client_id, client_name, client_number, sale, created_at, updated_at FROM discounts"
 

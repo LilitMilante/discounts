@@ -28,8 +28,10 @@ type UpdateClientDiscount struct {
 }
 
 type ClientDiscountFilters struct {
-	Name *string
-	Sale *int8
+	Name  *string
+	Sale  *int8
+	Start *time.Time
+	End   *time.Time
 }
 
 func (cd ClientDiscount) Validate() error {

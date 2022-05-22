@@ -8,7 +8,10 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
+
+const timeLayout = "02-01-2006"
 
 type Server struct {
 	r  *mux.Router
@@ -43,22 +46,50 @@ func (s Server) ClientDiscounts(w http.ResponseWriter, r *http.Request) {
 	f := entity.ClientDiscountFilters{}
 
 	q := r.URL.Query()
-	n := q.Get("name")
-	if n != "" {
-		f.Name = &n
+	name := q.Get("name")
+	if name != "" {
+		f.Name = &name
 	}
 
-	sl := q.Get("sale")
-	if sl != "" {
-		slInt, err := strconv.Atoi(sl)
+	sale := q.Get("sale")
+	if sale != "" {
+		slInt, err := strconv.Atoi(sale)
 		if err != nil {
 			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusBadRequest)
 
 			return
 		}
 		p := int8(slInt)
 		f.Sale = &p
+	}
+
+	startDate := q.Get("start")
+	if startDate != "" {
+		t, err := time.Parse(timeLayout, startDate)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		f.Start = &t
+	}
+
+	endData := q.Get("end")
+	if endData != "" {
+		t, err := time.Parse(timeLayout, endData)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		t = t.Add(24 * time.Hour)
+
+		f.End = &t
 	}
 
 	d, err := s.ds.ClientDiscounts(f)
