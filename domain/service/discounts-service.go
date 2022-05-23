@@ -20,16 +20,16 @@ func NewDiscountService(s *store.Store) *DiscountService {
 	return &ds
 }
 
-func (ds DiscountService) ClientDiscounts(f entity.ClientDiscountFilters) ([]entity.ClientDiscount, error) {
-	return ds.store.SelectClientDiscounts(f)
+func (ds DiscountService) Users(f entity.UserFilter) ([]entity.User, error) {
+	return ds.store.SelectUsers(f)
 }
 
-func (ds DiscountService) ClientDiscountByNumber(numb string) (entity.ClientDiscount, error) {
-	return ds.store.SelectClientDiscountByNumber(numb)
+func (ds DiscountService) UserByPhone(ph string) (entity.User, error) {
+	return ds.store.SelectUserByPhone(ph)
 }
 
-func (ds DiscountService) CreatedClientDiscount(d entity.ClientDiscount) (entity.ClientDiscount, error) {
-	_, err := ds.store.SelectClientDiscountByNumber(d.ClientNumber)
+func (ds DiscountService) CreateUser(d entity.Client) (entity.Client, error) {
+	_, err := ds.store.SelectUserByPhone(d.Phone)
 	switch {
 	case err == nil:
 		return d, domain.ErrDuplicateKey
@@ -44,10 +44,10 @@ func (ds DiscountService) CreatedClientDiscount(d entity.ClientDiscount) (entity
 	return ds.store.InsertClientDiscount(d)
 }
 
-func (ds DiscountService) EditClientDiscountByNumber(d entity.UpdateClientDiscount, number string) (entity.ClientDiscount, error) {
-	_, err := ds.store.SelectClientDiscountByNumber(number)
+func (ds DiscountService) EditClientDiscountByNumber(d entity.UpdateClient, number string) (entity.Client, error) {
+	_, err := ds.store.SelectUserByPhone(number)
 	if err != nil {
-		return entity.ClientDiscount{}, err
+		return entity.Client{}, err
 	}
 	nowT := time.Now()
 	d.UpdatedAt = &nowT
@@ -56,7 +56,7 @@ func (ds DiscountService) EditClientDiscountByNumber(d entity.UpdateClientDiscou
 }
 
 func (ds DiscountService) DeleteClientDiscount(numb string) error {
-	_, err := ds.store.SelectClientDiscountByNumber(numb)
+	_, err := ds.store.SelectUserByPhone(numb)
 	if err != nil {
 		return err
 	}

@@ -57,9 +57,9 @@ func TestClientDiscount_Validate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			cd := ClientDiscount{
-				ClientName:   tc.args.name,
-				ClientNumber: tc.args.number,
+			cd := Client{
+				Name:  tc.args.name,
+				Phone: tc.args.number,
 			}
 
 			err := cd.Validate()
@@ -160,10 +160,10 @@ func TestUpdateClientDiscount_Validate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			cd := UpdateClientDiscount{
-				ClientName:   tc.args.name,
-				ClientNumber: tc.args.number,
-				Sale:         tc.args.sale,
+			cd := UpdateClient{
+				Name:  tc.args.name,
+				Phone: tc.args.number,
+				Sale:  tc.args.sale,
 			}
 
 			err := cd.Validate()

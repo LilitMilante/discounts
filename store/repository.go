@@ -18,24 +18,24 @@ func NewStore(db *sql.DB) *Store {
 	}
 }
 
-func (s Store) InsertClientDiscount(d entity.ClientDiscount) (entity.ClientDiscount, error) {
+func (s Store) InsertClientDiscount(d entity.Client) (entity.Client, error) {
 	q := `
 INSERT INTO discounts (client_name, client_number, sale, created_at, updated_at) 
 VALUES ($1, $2, $3, $4, $5) RETURNING client_id
 `
 
-	err := s.db.QueryRow(q, d.ClientName, d.ClientNumber, d.Sale, d.CreatedAt, d.UpdatedAt).Scan(&d.ClientID)
+	err := s.db.QueryRow(q, d.Name, d.Phone, d.Sale, d.CreatedAt, d.UpdatedAt).Scan(&d.ID)
 
 	return d, err
 }
 
-func (s Store) SelectClientDiscounts(f entity.ClientDiscountFilters) ([]entity.ClientDiscount, error) {
+func (s Store) SelectUsers(f entity.UserFilter) ([]entity.User, error) {
 	var columns string
 	var args []interface{}
 
 	if f.Name != nil {
 		args = append(args, f.Name)
-		columns += fmt.Sprintf("client_name = $%d AND ", len(args))
+		columns += fmt.Sprintf("name = $%d AND ", len(args))
 	}
 	if f.Sale != nil {
 		args = append(args, f.Sale)
@@ -46,10 +46,10 @@ func (s Store) SelectClientDiscounts(f entity.ClientDiscountFilters) ([]entity.C
 		columns += fmt.Sprintf("created_at BETWEEN $%d AND $%d AND ", len(args)-1, len(args))
 	}
 
-	q := "SELECT client_id, client_name, client_number, sale, created_at, updated_at FROM discounts"
+	q := "SELECT id, name, phone, role, login, created_at, updated_at FROM users "
 
 	if len(args) != 0 {
-		where := columns[:len(columns)-5] // убираем в конце пробел и запятую
+		where := columns[:len(columns)-5] // убираем в конце пробелы и AND
 		q += fmt.Sprintf(" WHERE %s", where)
 	}
 
@@ -59,51 +59,51 @@ func (s Store) SelectClientDiscounts(f entity.ClientDiscountFilters) ([]entity.C
 	}
 	defer r.Close()
 
-	var ds []entity.ClientDiscount
+	var us []entity.User
 
-	var d entity.ClientDiscount
+	var u entity.User
 	for r.Next() {
-		err := r.Scan(&d.ClientID, &d.ClientName, &d.ClientNumber, &d.Sale, &d.CreatedAt, &d.UpdatedAt)
+		err := r.Scan(&u.ID, &u.Name, &u.Phone, &u.Role, &u.Login, &u.CreatedAt, &u.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
 
-		ds = append(ds, d)
+		us = append(us, u)
 	}
 
-	return ds, r.Err()
+	return us, r.Err()
 }
 
-func (s Store) SelectClientDiscountByNumber(numb string) (entity.ClientDiscount, error) {
-	var d entity.ClientDiscount
+func (s Store) SelectUserByPhone(ph string) (entity.User, error) {
+	var u entity.User
 
-	q := `SELECT client_id, client_name, client_number, sale, created_at, updated_at FROM discounts WHERE client_number = $1`
-	err := s.db.QueryRow(q, numb).
-		Scan(&d.ClientID, &d.ClientName, &d.ClientNumber, &d.Sale, &d.CreatedAt, &d.UpdatedAt)
+	q := `SELECT id, name, phone, role, login, created_at, updated_at FROM users WHERE phone = $1`
+	err := s.db.QueryRow(q, ph).
+		Scan(&u.ID, &u.Name, &u.Phone, &u.Role, &u.Login, &u.CreatedAt, &u.UpdatedAt)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return d, domain.ErrNotFound
+			return u, domain.ErrNotFound
 		}
 
-		return d, err
+		return u, err
 	}
 
-	return d, nil
+	return u, nil
 }
 
-func (s Store) UpdateClientDiscountByNumber(d entity.UpdateClientDiscount, numb string) (entity.ClientDiscount, error) {
-	var dc entity.ClientDiscount
+func (s Store) UpdateClientDiscountByNumber(d entity.UpdateClient, numb string) (entity.Client, error) {
+	var dc entity.Client
 
 	var columns string
 	var args []interface{}
 
-	if d.ClientName != nil {
-		args = append(args, d.ClientName)
+	if d.Name != nil {
+		args = append(args, d.Name)
 		columns += fmt.Sprintf("client_name = $%d, ", len(args))
 	}
-	if d.ClientNumber != nil {
-		args = append(args, d.ClientNumber)
+	if d.Phone != nil {
+		args = append(args, d.Phone)
 		columns += fmt.Sprintf("client_number = $%d, ", len(args))
 	}
 	if d.Sale != nil {
@@ -122,9 +122,9 @@ func (s Store) UpdateClientDiscountByNumber(d entity.UpdateClientDiscount, numb 
 	q := fmt.Sprintf("UPDATE discounts SET %s WHERE client_number = $%d RETURNING client_id, client_name, client_number, sale, created_at, updated_at", set, len(args))
 
 	err := s.db.QueryRow(q, args...).
-		Scan(&dc.ClientID, &dc.ClientName, &dc.ClientNumber, &dc.Sale, &dc.CreatedAt, &dc.UpdatedAt)
+		Scan(&dc.ID, &dc.Name, &dc.Phone, &dc.Sale, &dc.CreatedAt, &dc.UpdatedAt)
 	if err != nil {
-		return entity.ClientDiscount{}, err
+		return entity.Client{}, err
 	}
 
 	return dc, nil

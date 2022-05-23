@@ -28,11 +28,11 @@ func NewServer(ds *service.DiscountService) *Server {
 }
 
 func (s Server) Start(port string) error {
-	s.r.HandleFunc("/discounts", s.AddClientDiscount).Methods(http.MethodPost)
-	s.r.HandleFunc("/discounts", s.ClientDiscounts).Methods(http.MethodGet)
-	s.r.HandleFunc("/discounts/{number}", s.ClientDiscount).Methods(http.MethodGet)
-	s.r.HandleFunc("/discounts/{number}", s.ChangeClientDiscount).Methods(http.MethodPatch)
-	s.r.HandleFunc("/discounts/{number}", s.DeleteClientDiscount).Methods(http.MethodDelete)
+	s.r.HandleFunc("/users", s.AddUser).Methods(http.MethodPost)
+	s.r.HandleFunc("/users", s.Users).Methods(http.MethodGet)
+	s.r.HandleFunc("/users/{number}", s.User).Methods(http.MethodGet)
+	s.r.HandleFunc("/users/{number}", s.ChangeUser).Methods(http.MethodPatch)
+	s.r.HandleFunc("/users/{number}", s.DeleteUser).Methods(http.MethodDelete)
 
 	httpServer := http.Server{
 		Addr:    ":" + port,
@@ -41,8 +41,8 @@ func (s Server) Start(port string) error {
 	return httpServer.ListenAndServe()
 }
 
-func (s Server) ClientDiscounts(w http.ResponseWriter, r *http.Request) {
-	f := entity.ClientFilter{}
+func (s Server) Users(w http.ResponseWriter, r *http.Request) {
+	f := entity.UserFilter{}
 
 	q := r.URL.Query()
 	name := q.Get("name")
@@ -88,61 +88,61 @@ func (s Server) ClientDiscounts(w http.ResponseWriter, r *http.Request) {
 		f.End = &t
 	}
 
-	d, err := s.ds.ClientDiscounts(f)
+	u, err := s.ds.Users(f)
 	if err != nil {
 		sendERR(w, http.StatusBadRequest, err)
 
 		return
 	}
 
-	if d == nil {
-		d = make([]entity.Client, 0)
+	if u == nil {
+		u = make([]entity.User, 0)
 	}
 
-	sendOK(w, http.StatusOK, d)
+	sendOK(w, http.StatusOK, u)
 }
 
-func (s Server) ClientDiscount(w http.ResponseWriter, r *http.Request) {
-	n := mux.Vars(r)["number"]
+func (s Server) User(w http.ResponseWriter, r *http.Request) {
+	p := mux.Vars(r)["phone"]
 
-	d, err := s.ds.ClientDiscountByNumber(n)
+	ph, err := s.ds.UserByPhone(p)
 	if err != nil {
 		sendERR(w, http.StatusInternalServerError, err)
 
 		return
 	}
 
-	sendOK(w, http.StatusOK, d)
+	sendOK(w, http.StatusOK, ph)
 }
 
-func (s Server) AddClientDiscount(w http.ResponseWriter, r *http.Request) {
-	var d entity.Client
+func (s Server) AddUser(w http.ResponseWriter, r *http.Request) {
+	var u entity.Client
 
-	err := json.NewDecoder(r.Body).Decode(&d)
+	err := json.NewDecoder(r.Body).Decode(&u)
 	if err != nil {
 		sendERR(w, http.StatusBadRequest, err)
 
 		return
 	}
 
-	err = d.Validate()
+	err = u.Validate()
 	if err != nil {
 		sendERR(w, http.StatusBadRequest, err)
 
 		return
 	}
 
-	d, err = s.ds.CreatedClientDiscount(d)
+	u, err = s.ds.CreateUser(u)
 	if err != nil {
 		sendERR(w, http.StatusInternalServerError, err)
 
 		return
 	}
 
-	sendOK(w, http.StatusOK, d)
+	sendOK(w, http.StatusOK, u)
 }
 
-func (s Server) ChangeClientDiscount(w http.ResponseWriter, r *http.Request) {
+func (s Server) ChangeUser(w http.ResponseWriter, r *http.Request) {
 	var ud entity.UpdateClient
 
 	err := json.NewDecoder(r.Body).Decode(&ud)
@@ -172,7 +172,7 @@ func (s Server) ChangeClientDiscount(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (s Server) DeleteClientDiscount(w http.ResponseWriter, r *http.Request) {
+func (s Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	n := mux.Vars(r)["number"]
 
 	err := s.ds.DeleteClientDiscount(n)
