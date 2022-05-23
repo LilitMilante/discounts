@@ -5,7 +5,6 @@ import (
 	"discounts/domain/service"
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -43,7 +42,7 @@ func (s Server) Start(port string) error {
 }
 
 func (s Server) ClientDiscounts(w http.ResponseWriter, r *http.Request) {
-	f := entity.ClientDiscountFilters{}
+	f := entity.ClientFilter{}
 
 	q := r.URL.Query()
 	name := q.Get("name")
@@ -55,8 +54,7 @@ func (s Server) ClientDiscounts(w http.ResponseWriter, r *http.Request) {
 	if sale != "" {
 		slInt, err := strconv.Atoi(sale)
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusBadRequest)
+			sendERR(w, http.StatusBadRequest, err)
 
 			return
 		}
@@ -68,8 +66,7 @@ func (s Server) ClientDiscounts(w http.ResponseWriter, r *http.Request) {
 	if startDate != "" {
 		t, err := time.Parse(timeLayout, startDate)
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusBadRequest)
+			sendERR(w, http.StatusBadRequest, err)
 
 			return
 		}
@@ -81,8 +78,7 @@ func (s Server) ClientDiscounts(w http.ResponseWriter, r *http.Request) {
 	if endData != "" {
 		t, err := time.Parse(timeLayout, endData)
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusBadRequest)
+			sendERR(w, http.StatusBadRequest, err)
 
 			return
 		}
@@ -94,20 +90,16 @@ func (s Server) ClientDiscounts(w http.ResponseWriter, r *http.Request) {
 
 	d, err := s.ds.ClientDiscounts(f)
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
+		sendERR(w, http.StatusBadRequest, err)
 
 		return
 	}
 
 	if d == nil {
-		d = make([]entity.ClientDiscount, 0)
+		d = make([]entity.Client, 0)
 	}
 
-	err = json.NewEncoder(w).Encode(d)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
+	sendOK(w, http.StatusOK, d)
 }
 
 func (s Server) ClientDiscount(w http.ResponseWriter, r *http.Request) {
@@ -115,64 +107,54 @@ func (s Server) ClientDiscount(w http.ResponseWriter, r *http.Request) {
 
 	d, err := s.ds.ClientDiscountByNumber(n)
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
+		sendERR(w, http.StatusInternalServerError, err)
 
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(d)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
+	sendOK(w, http.StatusOK, d)
 }
 
 func (s Server) AddClientDiscount(w http.ResponseWriter, r *http.Request) {
-	var d entity.ClientDiscount
+	var d entity.Client
 
 	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		sendERR(w, http.StatusBadRequest, err)
 
 		return
 	}
 
 	err = d.Validate()
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
+		sendERR(w, http.StatusBadRequest, err)
 
 		return
 	}
 
 	d, err = s.ds.CreatedClientDiscount(d)
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
+		sendERR(w, http.StatusInternalServerError, err)
 
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(d)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
+	sendOK(w, http.StatusOK, d)
 }
 
 func (s Server) ChangeClientDiscount(w http.ResponseWriter, r *http.Request) {
-	var ud entity.UpdateClientDiscount
+	var ud entity.UpdateClient
 
 	err := json.NewDecoder(r.Body).Decode(&ud)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		sendERR(w, http.StatusBadRequest, err)
 
 		return
 	}
 
 	err = ud.Validate()
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
+		sendERR(w, http.StatusBadRequest, err)
 
 		return
 	}
@@ -181,16 +163,12 @@ func (s Server) ChangeClientDiscount(w http.ResponseWriter, r *http.Request) {
 
 	d, err := s.ds.EditClientDiscountByNumber(ud, n)
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
+		sendERR(w, http.StatusInternalServerError, err)
 
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(d)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
+	sendOK(w, http.StatusOK, d)
 
 }
 
@@ -199,7 +177,8 @@ func (s Server) DeleteClientDiscount(w http.ResponseWriter, r *http.Request) {
 
 	err := s.ds.DeleteClientDiscount(n)
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
+		sendERR(w, http.StatusNotFound, err)
 	}
+
+	sendOK(w, http.StatusOK, n)
 }
